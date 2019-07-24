@@ -1,5 +1,5 @@
 from peewee import *
-db = SqliteDatabase('journal.db')
+db = SqliteDatabase('banking.db')
 
 
 class Customer(Model):
