@@ -1,11 +1,13 @@
 from models import Customer, Statement
 from random import randrange
 from datetime import datetime
+from prettytable import PrettyTable
+import os
 
 
 def register():
     name = input("Enter full name: ")
-    pin = int(input("Enter PIN: "))
+    pin = int(input("Enter a four digit PIN: "))
     while True:
         temp_acc = randrange(10000, 99999)
         acc = Customer.select().where(Customer.acc_num == temp_acc)
@@ -15,68 +17,90 @@ def register():
             gen_acc = temp_acc
             break
     init_bal = float(input("Enter initial balance: "))
+    print(f"Your account number is: {gen_acc}")
     Customer.create(full_name=name, pin=pin, acc_num=gen_acc, balance=init_bal)
+    Statement.create(ac_no=gen_acc,
+                     credit=init_bal,
+                     debit=0,
+                     timestamp=datetime.now(),
+                     os_balance=init_bal)
+    print("Press any key")
+    dummy = input()
 
 
 def login():
+    flag = 0
     while True:
-        acc_no = input("Enter the account number: ")
+        replace_str = ''
+        if flag == 0:
+            pass
+        else:
+            replace_str = "valid "
+        acc_no = input(f"Enter {replace_str}account number: ")
         acc = Customer.select().where(Customer.acc_num == acc_no)
         if not acc.exists():
-            print("Enter valid account number!")
+            flag = 1
+            os.system("clear")
         else:
+            flag = 0
             break
     count = 0
     user = Customer.select().where(Customer.acc_num == acc_no)
     pin_acc = int(user.get().pin)
     while count < 3:
+        if flag == 1:
+            os.system("clear")
+            print(f"Wrong password! You have {3-count} tries left")
         pin = int(input("Enter Pin: "))
         if pin == pin_acc:
             break
         else:
             count += 1
-            print(f"Wrong password! You have {3-count} tries left")
+            flag = 1
     if count == 3:
+        os.system("clear")
         print("Access locked. Try Later")
+        print("Press any key to exit")
+        dummy = input()
         exit()
-    print("Logged in successfully!")
-    return (user, 1)
+    return (user.get(), 1)
 
 
 def deposit(user):
-    deposit = float(input("Amount to be deposited: "))
-    new_bal = user.balance + deposit
-    upd_user = Customer.update(Customer.balance=new_bal).where(Customer.acc_num == user.acc_num)
-    upd_user.execute()
-    state = Statement.create(Statement.ac_no=user.acc_num,
-                             Statement.credit=deposit,
-                             Statement.debit=0,
-                             Statement.timestamp=datetime.now(),
-                             Statement.balance=new_bal)
-    print("Deposit successful!")
+    deposit_am = float(input("Amount to be deposited: "))
+    user.balance += deposit_am
+    user.save()
+    state = Statement.create(ac_no=user.acc_num,
+                             credit=deposit_am,
+                             debit=0,
+                             timestamp=datetime.now(),
+                             os_balance=user.balance)
 
 
 def withdraw(user):
     while True:
-        withdraw = float(input("Amount to be withdrawn: "))
-        temp = Customer.select().where(Customer.acc_num == user.acc_num)
-        if withdraw > temp.get().balance:
+        withdraw_am = float(input("Amount to be withdrawn: "))
+        if withdraw_am > user.balance:
             print(
-                f"Not enough balance. Maximum amount is {temp.get().balance}")
+                f"Not enough balance. Maximum amount is {user.balance}")
         else:
             break
-    new_bal = user.balance - withdraw
-    upd_user = Customer.update(Customer.balance=new_bal).where(Customer.acc_num == user.acc_num)
-    upd_user.execute()
-    state = Statement.create(Statement.ac_no=user.acc_num,
-                             Statement.credit=0,
-                             Statement.debit=withdraw,
-                             Statement.timestamp=datetime.now(),
-                             Statement.balance=new_bal)
-    print("Withdrawal successful!")
+    user.balance -= withdraw_am
+    state = Statement.create(ac_no=user.acc_num,
+                             credit=0,
+                             debit=withdraw_am,
+                             timestamp=datetime.now(),
+                             os_balance=user.balance)
 
 
-def gen_statement():
+def gen_statement(user):
+    print(f"Name: {user.full_name}")
+    print(f"Account Number: {user.acc_num} \n")
     entries = Statement.select().where(Statement.ac_no == user.acc_num)
+    table = PrettyTable(["Date and Time", "Credit", "Debit", "Balance"])
     for entry in entries:
-        print(f"{entry[0]:<9}{entry[1]:<15}{entry[2]:<15}{entry[3]:<20}{entry[4]:<15")
+        table.add_row([str(entry.timestamp)[:19], entry.credit,
+                       entry.debit, entry.os_balance])
+    print(table)
+    dummy = input()
+    print("Press any key")

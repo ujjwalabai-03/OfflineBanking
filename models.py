@@ -1,22 +1,23 @@
 from peewee import *
-db = SqliteDatabase('banking.db')
+db = SqliteDatabase('Banking.db')
 
 
 class Customer(Model):
     full_name = CharField()
     pin = IntegerField()
     acc_num = IntegerField()
+    balance = FloatField()
 
     class Meta:
-        database = db  # This model uses the "journal.db" database
+        database = db  # This model uses the "Banking.db" database
 
 
 class Statement(Model):
-    ac_no = ForeignKeyField(customer, backref='customer')
+    ac_no = ForeignKeyField(Customer, backref='customer')
     credit = FloatField()
     debit = FloatField()
-    timestamp = DateTimeField()
-    balance = FloatField()
+    timestamp = TimestampField()
+    os_balance = FloatField()
 
     class Meta:
         database = db
