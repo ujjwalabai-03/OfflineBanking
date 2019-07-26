@@ -27,22 +27,25 @@ while True:
                 print("Choose an option")
                 print("1.Make Deposit ")
                 print("2.Withdraw from Account")
-                print("3.See MiniStatement")
-                print("4.Logout")
+                print("3.Transactions")
+                print("4.See MiniStatement")
+                print("5.Logout")
                 if iv_flag == 1:
                     print("Invalid input! Enter again")
                 iv_flag = 0
                 choice = input(">>> ")
                 if choice == "1":
-                    deposit(user)
+                    deposit(user, "Deposit by self")
                     success_str = "Deposit successful"
                 elif choice == "2":
-                    withdraw(user)
+                    withdraw(user, "To self")
                     success_str = "Withdrawal successful"
                 elif choice == "3":
+                    transaction(user)
+                elif choice == "4":
                     os.system("clear")
                     gen_statement(user)
-                elif choice == "4":
+                elif choice == "5":
                     log = 0
                 else:
                     iv_flag == 1

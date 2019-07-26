@@ -18,6 +18,18 @@ class Statement(Model):
     debit = FloatField()
     timestamp = TimestampField()
     os_balance = FloatField()
+    description = TextField()
+
+    class Meta:
+        database = db
+
+
+class Transactions(Model):
+    sender_acc = IntegerField()
+    receiver_acc = IntegerField()
+    amount = FloatField()
+    done = IntegerField()
+    comment = TextField()
 
     class Meta:
         database = db
@@ -25,4 +37,4 @@ class Statement(Model):
 
 if __name__ == "__main__":
     db.connect()
-    db.create_tables([Customer, Statement])
+    db.create_tables([Customer, Statement, Transactions])
