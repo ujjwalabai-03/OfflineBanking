@@ -1,4 +1,4 @@
-from models import Customer, Statement
+from models import Customer, Statement, Transactions
 from random import randrange
 from datetime import datetime
 from prettytable import PrettyTable
@@ -23,7 +23,8 @@ def register():
                      credit=init_bal,
                      debit=0,
                      timestamp=datetime.now(),
-                     os_balance=init_bal)
+                     os_balance=init_bal,
+                     description="Opening balance")
     print("Press any key")
     dummy = input()
 
@@ -66,23 +67,27 @@ def login():
     return (user.get(), 1)
 
 
-def deposit(user):
-    deposit_am = float(input("Amount to be deposited: "))
+def deposit(user, descript):
+    deposit_am = float(input("Amount: "))
     user.balance += deposit_am
     user.save()
     state = Statement.create(ac_no=user.acc_num,
                              credit=deposit_am,
                              debit=0,
                              timestamp=datetime.now(),
-                             os_balance=user.balance)
+                             os_balance=user.balance,
+                             description=descript)
 
 
-def withdraw(user):
+def withdraw(user, descript):
+    flag = 0
     while True:
-        withdraw_am = float(input("Amount to be withdrawn: "))
+        os.system("clear")
+        if flag == 1:
+            print(f"Not enough balance. Maximum amount is {user.balance}")
+        withdraw_am = float(input("Amount: "))
         if withdraw_am > user.balance:
-            print(
-                f"Not enough balance. Maximum amount is {user.balance}")
+            flag = 1
         else:
             break
     user.balance -= withdraw_am
@@ -90,17 +95,84 @@ def withdraw(user):
                              credit=0,
                              debit=withdraw_am,
                              timestamp=datetime.now(),
-                             os_balance=user.balance)
+                             os_balance=user.balance,
+                             description=descript)
 
 
 def gen_statement(user):
     print(f"Name: {user.full_name}")
     print(f"Account Number: {user.acc_num} \n")
     entries = Statement.select().where(Statement.ac_no == user.acc_num)
-    table = PrettyTable(["Date and Time", "Credit", "Debit", "Balance"])
+    table = PrettyTable(
+        ["Date and Time", "Credit", "Debit", "Balance", "Description"])
     for entry in entries:
         table.add_row([str(entry.timestamp)[:19], entry.credit,
-                       entry.debit, entry.os_balance])
+                       entry.debit, entry.os_balance, entry.description])
     print(table)
     dummy = input()
     print("Press any key")
+
+
+def transaction(user):
+    flag = 0
+    success_msg = ''
+    while True:
+        os.system("clear")
+        if success_msg != '':
+            print(success_msg)
+            success_msg = ''
+        num_str = ''
+        transout = Transactions.select().where(
+            (Transactions.sender_acc == user.acc_num) &
+            (Transactions.done == 0))
+        req_count = transout.count()
+        if req_count > 0:
+            num_str = f"({req_count})"
+        if flag == 1:
+            print("Invalid input !")
+            flag = 0
+        print("Transactions Menu")
+        print("1.Transfer")
+        print("2.Request transfer")
+        print(f"3.Requests{num_str}")
+        print("4.Refresh")
+        print("5.Back to main menu")
+        choice = input(">>>")
+        if choice == "1":
+            transfer(user)
+            success_msg = "Transfer successful!"
+        elif choice == "2":
+            request(user)
+            success_msg = "Request sent!"
+        elif choice == "3":
+            comp_request(user)
+            success_msg = "Request completed!"
+        elif choice == "4":
+            continue
+        elif choice == "5":
+            break
+        else:
+            flag = 1
+
+
+def transfer(user):
+    flag = 0
+    while True:
+        os.system("clear")
+        if flag == 2:
+            print("Cannot transfer money to self")
+            flag = 1
+        if flag == 0:
+            rec_acc = int(input("Enter the account number of recepient: "))
+        if flag == 1:
+            rec_acc = int(input("Enter a valid account number: "))
+        user_check = Customer.select().where(Customer.acc_num == rec_acc)
+        if user_check.exists():
+            if user_check.get().acc_num == user.acc_num:
+                flag = 2
+            else:
+                break
+        else:
+            flag = 1
+    withdraw(user, f"Tsfr to Acc.no {rec_acc}")
+    deposit(user_check.get(), f"Tsfr by Acc.no {user.acc_num}")
