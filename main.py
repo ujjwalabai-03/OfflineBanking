@@ -35,10 +35,10 @@ while True:
                 iv_flag = 0
                 choice = input(">>> ")
                 if choice == "1":
-                    deposit(user, "Deposit by self")
+                    deposit(user, "Deposit by self", 0)
                     success_str = "Deposit successful"
                 elif choice == "2":
-                    withdraw(user, "To self")
+                    withdraw(user, "To self", 0)
                     success_str = "Withdrawal successful"
                 elif choice == "3":
                     transaction(user)
