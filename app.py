@@ -74,7 +74,7 @@ def deposit(user, descript, trans_type, deposit_am=0):
         deposit_am = float(input("Amount: "))
     user.balance += deposit_am
     user.save()
-    statement_entry(user, descript, debit=deposit_am)
+    statement_entry(user, descript, credit=deposit_am)
 
 
 def withdraw(user, descript, trans_type, withdraw_am=0):
@@ -91,7 +91,7 @@ def withdraw(user, descript, trans_type, withdraw_am=0):
                 break
     user.balance -= withdraw_am
     user.save()
-    statement_entry(user, descript, credit=withdraw_am)
+    statement_entry(user, descript, debit=withdraw_am)
 
 
 def statement_entry(user, descript, credit=0, debit=0):
